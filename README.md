@@ -1,8 +1,7 @@
-\# Tree Moisture Content Analysis
+# Tree Moisture Content Analysis
 
 
-
-\## Project Overview
+## Project Overview
 
 
 
@@ -14,7 +13,7 @@ The study applies \*\*exploratory data analysis (EDA)\*\*, \*\*ANOVA\*\*, and \*
 
 
 
-\## Dataset
+## Dataset
 
 
 
@@ -36,7 +35,7 @@ The study applies \*\*exploratory data analysis (EDA)\*\*, \*\*ANOVA\*\*, and \*
 
 
 
-\## Methodology
+## Methodology
 
 
 
@@ -88,7 +87,7 @@ The study applies \*\*exploratory data analysis (EDA)\*\*, \*\*ANOVA\*\*, and \*
 
 
 
-\## Final Regression Model
+## Final Regression Model
 
 
 
@@ -120,7 +119,7 @@ Where coefficients were estimated as:
 
 
 
-\## Key Findings
+## Key Findings
 
 
 
@@ -134,7 +133,7 @@ Where coefficients were estimated as:
 
 
 
-\## Technologies Used
+## Technologies Used
 
 
 
@@ -146,7 +145,7 @@ Where coefficients were estimated as:
 
 
 
-\## Project Structure
+## Project Structure
 
 
 
@@ -162,7 +161,7 @@ Where coefficients were estimated as:
 
 
 
-\## Authors
+## Authors
 
 
 
