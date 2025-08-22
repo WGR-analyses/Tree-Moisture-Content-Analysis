@@ -1,0 +1,350 @@
+---
+title: "Report_1"
+author:
+- Wanchai
+- Niels
+- Rongjun
+date: "2023-03-24"
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
+fontsize: 12pt
+---
+
+
+```{r setup, include=FALSE}
+library("knitr")
+library("broom")
+library("tinytex")
+library("papeR")
+library("ggplot2")
+knitr::opts_chunk$set(include = TRUE)
+options(tinytex.verbose = TRUE)
+```
+
+```{r E1, include=TRUE}
+Moisture<-read.table("treemoist.dat", header=FALSE, skip=0,col.names=c("Species", "Branch","Location", "Transpiration", "Moisture"))
+print(Moisture)
+```
+```{r E1_2, include=TRUE}
+# Install the dplyr package if not already installed
+# install.packages("dplyr")
+
+# Load the dplyr package
+library(dplyr)
+Moisture_reg <- Moisture
+# Create a new column for species
+Moisture_reg <- Moisture_reg %>%
+  mutate(Loblolly_Pine = ifelse(Species == 1, 1, 0),
+         Shortleaf_Pine = ifelse(Species == 2, 1, 0),
+         Yellow_Poplar = ifelse(Species == 3, 1, 0),
+         Red_Gum = ifelse(Species == 4, 1, 0)) %>%
+  select(-Species)  # Remove the old 'Species' column
+
+# Create a new column for location
+Moisture_reg <- Moisture_reg %>%
+  mutate(Proximal = ifelse(Location == 1, 1, 0),
+         Central = ifelse(Location == 2, 1, 0),
+         Distal = ifelse(Location == 3, 1, 0)) %>%
+  select(-Location)  # Remove the old 'Location' column
+
+
+Moisture_reg <- Moisture_reg %>%
+  mutate(Transpiration_type_2 = ifelse(Transpiration == 2, 1, 0)) %>%
+  select(-Transpiration)  # Remove the old 'Species' column
+
+Moisture_reg <- Moisture_reg %>%
+  select(-Branch)%>%
+
+# Print the updated Moisture data frame
+print(Moisture_reg)
+
+```
+
+
+## Including Plots
+
+As there is only one observation for a specific list of values it does not make sense to calculate the mean and the sd with all the variable combined.
+
+See the mean for each variable
+```{r By Species, include=FALSE}
+tapply(Moisture$Moisture, list(Moisture$Species), mean)
+tapply(Moisture$Moisture, list(Moisture$Species), sd)
+```
+```{r By Branch, include=FALSE}
+tapply(Moisture$Moisture, list(Moisture$Branch), mean)
+tapply(Moisture$Moisture, list(Moisture$Branch), sd)
+```
+
+```{r By Location, include=FALSE}
+tapply(Moisture$Moisture, list(Moisture$Location), mean)
+tapply(Moisture$Moisture, list(Moisture$Location), sd)
+```
+
+```{r By Transpiration, include=FALSE}
+tapply(Moisture$Moisture, list(Moisture$Transpiration), mean)
+tapply(Moisture$Moisture, list(Moisture$Transpiration), sd)
+```
+It seems that except for the branches the variance is quite stable along the factor variable
+
+```{r}
+# Multiple plot function
+#
+# ggplot objects can be passed in ..., or to plotlist (as a list of ggplot objects)
+# - cols:   Number of columns in layout
+# - layout: A matrix specifying the layout. If present, 'cols' is ignored.
+#
+# If the layout is something like matrix(c(1,2,3,3), nrow=2, byrow=TRUE),
+# then plot 1 will go in the upper left, 2 will go in the upper right, and
+# 3 will go all the way across the bottom.
+#
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+  library(grid)
+
+  # Make a list from the ... arguments and plotlist
+  plots <- c(list(...), plotlist)
+
+  numPlots = length(plots)
+
+  # If layout is NULL, then use 'cols' to determine layout
+  if (is.null(layout)) {
+    # Make the panel
+    # ncol: Number of columns of plots
+    # nrow: Number of rows needed, calculated from # of cols
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                    ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+
+ if (numPlots==1) {
+    print(plots[[1]])
+
+  } else {
+    # Set up the page
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+
+    # Make each plot, in the correct location
+    for (i in 1:numPlots) {
+      # Get the i,j matrix positions of the regions that contain this subplot
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                      layout.pos.col = matchidx$col))
+    }
+  }
+}
+```
+
+
+
+```{r plotDesign, echo=FALSE, dpi=300, fig.width=5, fig.height=5}
+Moisture <- Moisture[, c("Moisture", "Species", "Branch", "Location", "Transpiration")]
+
+Moisture$Species <- as.factor(Moisture$Species)
+Moisture$Branch <- as.factor(Moisture$Branch)
+Moisture$Location <- as.factor(Moisture$Location)
+Moisture$Transpiration <- as.factor(Moisture$Transpiration)
+Moisture <- Moisture[, c("Moisture", "Species", "Branch", "Location", "Transpiration")]
+
+plot1 <- ggplot(Moisture, aes(Species, Moisture)) + 
+  geom_boxplot() +
+  labs(x="Species", y="Moisture")
+
+plot2 <- ggplot(Moisture, aes(Branch, Moisture)) + 
+  geom_boxplot() +
+  labs(x="Branch", y="Moisture")
+
+plot3 <- ggplot(Moisture, aes(Location, Moisture)) + 
+  geom_boxplot() +
+  labs(x="Location", y="Moisture")
+
+plot4 <- ggplot(Moisture, aes(Transpiration, Moisture)) + 
+  geom_boxplot() +
+  labs(x="Transpiration", y="Moisture")
+
+dpi <- 1500  # Adjust the DPI (dots per inch) as needed, to avoid blurry plot : choose high numbers.
+width <- 4  # Width of the plot in inches
+height <- 4 # Height of the plot in inches
+
+jpeg("figure/multiplot.jpg", width = width, height = height, units = "in", res = dpi)
+multiplot(plot1,plot2,plot3,plot4, cols=2)
+dev.off()
+```
+
+
+
+
+```{r anova plot, echo=FALSE, dpi=300, fig.width=5, fig.height=5}
+Moisture_reg
+#Moisture<-read.table("treemoist.dat", header=FALSE, skip=0,col.names=c("Species", "Branch","Location", "Transpiration", "Moisture"))
+
+Moisture_reg$Loblolly_Pine <- as.factor(Moisture_reg$Loblolly_Pine)
+Moisture_reg$Shortleaf_Pine <- as.factor(Moisture_reg$Shortleaf_Pine)
+Moisture_reg$Yellow_Poplar <- as.factor(Moisture_reg$Yellow_Poplar)
+Moisture_reg$Red_Gum <- as.factor(Moisture_reg$Red_Gum)
+
+
+Moisture_reg$Location <- as.factor(Moisture_reg$Proximal)
+Moisture_reg$Location <- as.factor(Moisture_reg$Central)
+Moisture_reg$Location <- as.factor(Moisture_reg$Distal)
+
+
+Moisture_reg$Transpiration_type_2 <- as.factor(Moisture_reg$Transpiration_type_2)
+Moisture_reg$Moisture_reg <- as.numeric(as.character(Moisture_reg$Moisture))
+
+plot(Moisture)
+```
+
+
+
+
+```{r results='tex'}
+species_aov <- aov(Moisture ~ Loblolly_Pine+Shortleaf_Pine+Yellow_Poplar+Proximal+Central+Transpiration_type_2, data=Moisture_reg)
+#xtable(species_aov)
+
+# extracting the compact letter display and adding to the Tk table
+#species_aov <- as.data.frame.list(species_aov$feed)
+#species_aov <- species_aov$Letters
+
+summary(species_aov)
+
+#species_aov2 <- aov(Moisture ~ Species*Location*Transpiration, data=Moisture)
+# Calculate the interactions
+#Moisture_reg <- transform(Moisture_reg, Species_Location_Transpiration = interaction(Loblolly_Pine, Shortleaf_Pine, Yellow_Poplar, Central, Distal, Transpiration_type_2))
+
+# Perform the ANOVA with interactions
+species_aov2 <- aov(Moisture ~ (Loblolly_Pine + Shortleaf_Pine + Yellow_Poplar + Red_Gum) *
+                     (Proximal + Central + Distal) * Transpiration_type_2, data = Moisture_reg)
+
+# Print the ANOVA results
+summary(species_aov2)
+
+
+#summary(species_aov2)
+```
+
+## qqplot normal plot of residuals
+
+```{r}
+eij=residuals(species_aov)
+eij2=residuals(species_aov2)
+```
+
+  
+```{r plots}
+library(jpeg)
+
+# Attach the mtcars dataset (optional)
+#attach(mtcars)
+
+# Set up the plotting layout
+par(pty="s")
+dpi <- 900  # Adjust the DPI (dots per inch) as needed, to avoid blurry plot : choose high numbers.
+width <- 4  # Width of the plot in inches
+height <- 4 # Height of the plot in inches
+
+# Save the plots as JPEG files with DPI 900
+jpeg("figure/histogram_resid1.jpg", width = width, height = height, units = "in", res = dpi)
+
+hist(eij, main = "Histogram of residuals")
+dev.off()
+
+jpeg("figure/density_resid1.jpg", width = width, height = height, units = "in", res = dpi)
+plot(density(eij), main = "Density plot of residuals", ylab = "Density", xlab = "Residuals")
+dev.off()
+
+jpeg("figure/histogram_resid2.jpg", width = width, height = height, units = "in", res = dpi)
+hist(eij2, main = "Histogram of residuals")
+dev.off()
+
+jpeg("figure/density_resid2.jpg", width = width, height = height, units = "in", res = dpi)
+plot(density(eij2), main = "Density plot of residuals", ylab = "Density", xlab = "Residuals")
+dev.off()
+
+```
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE, dpi=300, fig.width=8, fig.height=4}
+attach(mtcars)
+par(mfrow=c(1,2))
+jpeg("figure/qq1.jpg", width = width, height = height, units = "in", res = dpi)
+
+qqnorm(eij)
+qqline(eij) 
+dev.off()
+
+jpeg("figure/qq2.jpg", width = width, height = height, units = "in", res = dpi)
+qqnorm(eij2)
+qqline(eij2)
+dev.off()
+
+```
+
+
+
+The anova table is not significant for the branch then we can just remove it from the anova table.
+
+Now we study the interaction between species and location and transpiration
+
+
+We found that the ANOVA is significant for Species, Location and Transpiration when tested separately, but not when taken Species and location and not when Location and transpiration are taken together. This suggest that location and the transpiration type are correlated in their effect and  Specie and location too. 
+on moisture. Suggestion : the transpiration depends on the branch location. And that the branch location and depends on the species. But we have significant moisture difference even with the covariate species and transpiration type.
+
+## residual vs. fitted
+```{r , dpi=10000, fig.width=6, fig.height=6}
+# Set up the layout for four plots
+layout(matrix(1:4, ncol = 2))
+par(pty = "s", mar = c(3, 1, 2, 1) + 0.1)
+
+for (i in 1:5) {
+  filename <- paste0("figure/plot_1_", i, ".jpg")
+  jpeg(filename = filename, width = 4, height = 4, units = "in", res = dpi)
+  
+  # Plot
+  plot(species_aov, which = i)
+  
+  # Save the plot
+  dev.off()
+}
+
+```
+
+
+```{r echo=FALSE, dpi=300, fig.width=8, fig.height=8}
+
+# Set up the layout for four plots
+layout(matrix(1:4, ncol = 2))
+par(pty = "s", mar = c(3, 1, 2, 1) + 0.1)
+
+#jpeg(filename = "figure/plot1.jpg", width = 6, height = 6, units = "in", res = dpi)
+
+# Plot 1
+plot(species_aov2)
+
+for (i in 1:5) {
+  filename <- paste0("figure/plot_2_", i, ".jpg")
+  jpeg(filename = filename, width = 4, height = 4, units = "in", res = dpi)
+  
+  # Plot
+  plot(species_aov2, which = i)
+  
+  # Save the plot
+  dev.off()
+}
+```
+
+## the estimated model
+```{r}
+coef(species_aov)
+```
+
+```{r}
+
+coef(species_aov2)
+```
+
+write equation here
+
+
+
